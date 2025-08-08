@@ -4,7 +4,3 @@
 
 - name: Run Deployment Script
   script: container_creation.sh -c nginx grafana prometheus jenkins sonarqube
-  register: deployment_result
-- name: Display Deployment Result
-  debug:
-    var: deployment_result.stdout_lines

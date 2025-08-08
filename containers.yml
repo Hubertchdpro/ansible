@@ -1,0 +1,8 @@
+- name: LXC installation
+  hosts: localhost
+  connection: local
+  roles:
+# - lxc_installation
+   - container_creation
+
+

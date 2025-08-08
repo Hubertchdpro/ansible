@@ -76,6 +76,8 @@ createContainer() {
     # Create Ansible inventory
     if [ ! -d ${ANSIBLE_DIR} ]; then
         mkdir -p ${ANSIBLE_DIR}
+    else
+        rm -rf ${ANSIBLE_DIR}/*
     fi
     echo "containers:" > ${ANSIBLE_DIR}/inventory.yml
     echo "  vars:" >> ${ANSIBLE_DIR}/inventory.yml

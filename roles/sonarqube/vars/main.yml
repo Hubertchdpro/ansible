@@ -1,3 +1,8 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # vars file for sonarqube
+sonarqube_version: "25.8.0.112029"
+sonarqube_user: sonarqube
+sonarqube_group: sonarqube
+sonarqube_home: /opt/sonarqube
+postgres_password: "sonar123"

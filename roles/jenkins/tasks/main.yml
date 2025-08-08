@@ -23,11 +23,11 @@
   apt:
     update_cache: yes
 
-- name: Install Jenkins
+- name: Install Jenkins and JDK
   apt:
     name: 
     - jenkins
-    - openjdk-21-jdk
+    - default-jdk
     state: present
 
 - name: Start and enable Jenkins service

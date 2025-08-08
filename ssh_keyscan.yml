@@ -1,5 +1,4 @@
-﻿---
-- name: SSH keyscan all inventory hosts
+﻿- name: SSH keyscan all inventory hosts
   hosts: containers
   connection: local
   gather_facts: no
@@ -9,7 +8,7 @@
   tasks:
     - name: Get all hosts from inventory
       set_fact:
-        all_inventory_hosts: "{{ groups['all'] }}"
+        all_inventory_hosts: "{{ groups['containers'] }}"
     
     - name: Get IP addresses for all hosts
       set_fact:

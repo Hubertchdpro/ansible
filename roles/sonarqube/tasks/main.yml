@@ -1,5 +1,181 @@
 #SPDX-License-Identifier: MIT-0
 ---
-# tasks file for sonarqube
-- name: download sonarqube
-  
+
+- name: Install required packages
+  apt:
+    name:
+      - openjdk-17-jdk
+      - postgresql
+      - postgresql-contrib
+      - unzip
+      - wget
+      - curl
+    state: present
+
+- name: Configure system limits for SonarQube
+  blockinfile:
+    path: /etc/security/limits.conf
+    block: |
+      sonarqube   -   nofile   131072
+      sonarqube   -   nproc    8192
+
+- name: Configure kernel parameters
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop:
+    - { name: 'vm.max_map_count', value: '524288' }
+    - { name: 'fs.file-max', value: '131072' }
+
+- name: Start and enable PostgreSQL
+  systemd:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: Create SonarQube database user
+  postgresql_user:
+    name: sonar
+    password: "{{ postgres_password }}"
+    role_attr_flags: CREATEDB
+    state: present
+  become_user: postgres
+
+- name: Create SonarQube database
+  postgresql_db:
+    name: sonarqube
+    owner: sonar
+    encoding: UTF-8
+    template: template0
+    state: present
+  become_user: postgres
+
+- name: Create SonarQube system group
+  group:
+    name: "{{ sonarqube_group }}"
+    state: present
+
+- name: Create SonarQube system user
+  user:
+    name: "{{ sonarqube_user }}"
+    group: "{{ sonarqube_group }}"
+    home: "{{ sonarqube_home }}"
+    shell: /bin/bash
+    system: yes
+    create_home: no
+    state: present
+
+- name: Create SonarQube directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ sonarqube_user }}"
+    group: "{{ sonarqube_group }}"
+    mode: '0755'
+  loop:
+    - "{{ sonarqube_home }}"
+    - /var/sonarqube/data
+    - /var/sonarqube/temp
+    - /var/sonarqube/logs
+
+- name: Download SonarQube
+  get_url:
+    url: "https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-{{ sonarqube_version }}.zip"
+    dest: "/tmp/sonarqube-{{ sonarqube_version }}.zip"
+    mode: '0644'
+
+- name: Extract SonarQube
+  unarchive:
+    src: "/tmp/sonarqube-{{ sonarqube_version }}.zip"
+    dest: /tmp
+    remote_src: yes
+    creates: "/tmp/sonarqube-{{ sonarqube_version }}"
+
+- name: Move SonarQube files
+  shell: |
+    cp -r /tmp/sonarqube-{{ sonarqube_version }}/* {{ sonarqube_home }}/
+    chown -R {{ sonarqube_user }}:{{ sonarqube_group }} {{ sonarqube_home }}
+  args:
+    creates: "{{ sonarqube_home }}/bin"
+
+- name: Configure SonarQube properties
+  blockinfile:
+    path: "{{ sonarqube_home }}/conf/sonar.properties"
+    block: |
+      # Database configuration
+      sonar.jdbc.username=sonar
+      sonar.jdbc.password={{ postgres_password }}
+      sonar.jdbc.url=jdbc:postgresql://localhost:5432/sonarqube
+      
+      # SonarQube directories
+      sonar.path.data=/var/sonarqube/data
+      sonar.path.temp=/var/sonarqube/temp
+      sonar.path.logs=/var/sonarqube/logs
+      
+      # Web server configuration
+      sonar.web.host=0.0.0.0
+      sonar.web.port=9000
+      sonar.web.context=/
+      
+      # Elasticsearch configuration
+      sonar.search.javaOpts=-Xmx2g -Xms2g -XX:MaxDirectMemorySize=256m -XX:+HeapDumpOnOutOfMemoryError
+      
+      # SonarQube server configuration
+      sonar.ce.javaOpts=-Xmx2g -Xms128m -XX:+HeapDumpOnOutOfMemoryError
+
+- name: Create SonarQube systemd service file
+  copy:
+    dest: /etc/systemd/system/sonarqube.service
+    content: |
+      [Unit]
+      Description=SonarQube service
+      After=syslog.target network.target
+      
+      [Service]
+      Type=simple
+      ExecStart={{ sonarqube_home }}/bin/linux-x86-64/sonar.sh start
+      ExecStop={{ sonarqube_home }}/bin/linux-x86-64/sonar.sh stop
+      ExecReload={{ sonarqube_home }}/bin/linux-x86-64/sonar.sh restart
+      User={{ sonarqube_user }}
+      Group={{ sonarqube_group }}
+      Restart=always
+      LimitNOFILE=131072
+      LimitNPROC=8192
+      
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+
+- name: Start and enable SonarQube service
+  systemd:
+    name: sonarqube
+    state: started
+    enabled: yes
+
+- name: Wait for SonarQube to start
+  wait_for:
+    port: 9000
+    delay: 30
+    timeout: 300
+
+- name: Clean up downloaded files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/sonarqube-{{ sonarqube_version }}.zip"
+    - "/tmp/sonarqube-{{ sonarqube_version }}"
+
+- name: Display SonarQube access information
+  debug:
+    msg: |
+      SonarQube installation completed!
+      Access SonarQube at: http://{{ ansible_default_ipv4.address }}:9000
+      Default credentials: admin/admin
+      Please change the default password on first login.

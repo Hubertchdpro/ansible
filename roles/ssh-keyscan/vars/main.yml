@@ -1,4 +1,0 @@
-#SPDX-License-Identifier: MIT-0
----
-# vars file for ssh-keyscan
-known_hosts_file: "{{ lookup('env', 'HOME') }}/.ssh/known_hosts"
