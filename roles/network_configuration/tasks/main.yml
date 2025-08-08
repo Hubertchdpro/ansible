@@ -1,0 +1,49 @@
+#SPDX-License-Identifier: MIT-0
+---
+
+- name: Iptables flush nat
+  ansible.builtin.iptables:
+    table: nat
+    chain: '{{ item }}'
+    flush: yes
+  with_items: [ 'INPUT', 'OUTPUT', 'PREROUTING', 'POSTROUTING' ]
+
+
+- name: Enable port forwarding
+  ansible.builtin.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+    reload: yes
+
+- name: Prerouting
+  iptables:
+    table: nat
+    chain: PREROUTING
+    protocol: tcp
+    destination_port: '{{ item }}'
+    jump: DNAT
+    to_destination: '{{ ansible_default_ipv4.address }}:{{ item }}'
+    state: present
+  with_items:
+
+- name: Forwarding
+  iptables:
+    chain: FORWARD
+    protocol: tcp
+    destination_port: '{{ item }}'
+    jump: ACCEPT
+    state: present
+  with_items:
+    - '22'  # SSH
+    - '80'  # HTTP
+    - '443' # HTTPS
+    
+- name: POSTROUTING
+  iptables:
+    table: nat
+    chain: POSTROUTING
+    out_interface: '{{ ansible_default_ipv4.interface }}'
+    jump: MASQUERADE
+    state: present
+

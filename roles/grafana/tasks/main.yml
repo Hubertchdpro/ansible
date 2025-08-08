@@ -1,0 +1,57 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for grafana
+- name: Grafana dependencies
+  apt:
+    name: 
+      - apt-transport-https
+      - software-properties-common
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Ensure keyrings directory exists
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download and dearmor Grafana GPG key
+  shell: wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+
+- name: Add Grafana APT repository stable release 
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main"
+    state: present
+    update_cache: yes
+
+- name: Add Grafana APT repository beta release
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com beta main"
+    state: present
+    update_cache: yes
+
+- name: Install Grafana
+  apt:
+    name: grafana
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Reload systemctl daemon
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and Start Grafana service
+  service:
+   name: grafana-server
+   state: started
+   enabled: yes
+
+- name: check grafana is installed
+  command: systemctl status grafana-server
+  register: grafana_status
+- name: Display Grafana Status
+  debug:
+    msg: "Grafana is installed and running"
+  when: grafana_status.rc == 0

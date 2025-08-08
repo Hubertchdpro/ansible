@@ -1,0 +1,13 @@
+containers:
+  vars:
+  hosts:
+    grafana:
+      ansible_host: 10.0.3.19
+    jenkins:
+      ansible_host: 10.0.3.228
+    nginx:
+      ansible_host: 10.0.3.108
+    prometheus:
+      ansible_host: 10.0.3.130
+    sonarqube:
+      ansible_host: 10.0.3.250

@@ -1,0 +1,46 @@
+- name: LXC installation
+  hosts: localhost
+  connection: local
+  roles:
+#- lxc_installation
+   - container_creation
+
+# - name: Keyscan hosts
+#   hosts: containers
+#   connection: local
+#   gather_facts: no
+#   roles:
+#   - ssh-keyscan
+
+
+- name: Tools installation
+  hosts: nginx
+  become: yes
+  roles: 
+  - nginx
+
+- name: Tools installation
+  hosts: prometheus
+  become: yes
+  roles: 
+  - prometheus
+
+- name: Tools installation
+  hosts: grafana
+  become: yes
+  roles: 
+  - grafana
+
+- name: Tools installation
+  hosts: jenkins
+  become: yes
+  roles: 
+  - jenkins
+
+# - name: Tools installation
+#   hosts: sonarqube
+#   become: yes
+#   roles: 
+#   - sonarqube
+
+- name: net

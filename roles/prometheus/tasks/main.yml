@@ -1,0 +1,16 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Install Prometheus
+  apt:
+    name: prometheus
+    state: present
+  register: prometheus_install  
+- name: Ensure Prometheus is running
+  service:
+    name: prometheus
+    state: started
+    enabled: true
+  when: prometheus_install.changed  
+- name: display Prometheus status
+  debug:
+    msg: "Prometheus installation and service status: {{ prometheus_install }}"

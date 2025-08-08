@@ -1,0 +1,11 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for nginx
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present  
+  register: nginx_install
+- name: Display Nginx installation status
+  debug:
+    msg: "Nginx installation status: {{ nginx_install }}"

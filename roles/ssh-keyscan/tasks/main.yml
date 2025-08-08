@@ -1,0 +1,23 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Get all hosts from inventory
+  set_fact:
+    all_inventory_hosts: "{{ groups['all'] }}"
+
+- name: Get IP addresses for all hosts (excluding localhost)
+  set_fact:
+    host_ips: "{{ host_ips | default({}) | combine({item: hostvars[item]['ansible_host'] | default(item)}) }}"
+  loop: "{{ all_inventory_hosts | select('in', hostvars.keys()) | reject('match', 'localhost') | list }}"
+
+- name: Scan SSH keys for all hosts (using IPs)
+  known_hosts:
+    path: "{{ known_hosts_file }}"
+    name: "{{ host_ips[item] }}"
+    key: "{{ lookup('pipe', 'ssh-keyscan -H ' + host_ips[item]) }}"
+    state: present
+  loop: "{{ all_inventory_hosts }}"
+  register: keyscan_results
+
+- name: Show results
+  debug:
+    msg: "SSH key scanning completed for {{ all_inventory_hosts | length }} hosts"
