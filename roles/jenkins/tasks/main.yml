@@ -27,8 +27,12 @@
   apt:
     name: 
     - jenkins
-    - default-jdk
+    - openjdk-21-jre
     state: present
+    
+- name: Systemctl Daemon reload
+  systemd:
+    daemon_reload: yes
 
 - name: Start and enable Jenkins service
   systemd:

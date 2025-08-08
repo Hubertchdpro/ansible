@@ -6,3 +6,5 @@ sonarqube_user: sonarqube
 sonarqube_group: sonarqube
 sonarqube_home: /opt/sonarqube
 postgres_password: "sonar123"
+# postgres_db: "sonarqube"
+# postgres_user: "sonarqube"

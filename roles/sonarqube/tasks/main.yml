@@ -4,13 +4,22 @@
 - name: Install required packages
   apt:
     name:
-      - openjdk-17-jdk
+      - openjdk-21-jre
       - postgresql
       - postgresql-contrib
       - unzip
       - wget
       - curl
+      - python3-psycopg2
+      - acl
     state: present
+
+- name: Ensure filesystem is mounted with ACL support (if needed)
+  shell: |
+    mount -o remount,acl /
+  args:
+    warn: false
+  ignore_errors: true
 
 - name: Configure system limits for SonarQube
   blockinfile:
@@ -34,6 +43,13 @@
     name: postgresql
     state: started
     enabled: yes
+
+# - name: Configure PostgreSQL for SonarQube user and database
+#   become_user: postgres
+#   shell: |
+#     psql -c "CREATE USER {{ postgres_user }} WITH PASSWORD '{{ postgres_password }}';"
+#     psql -c "CREATE DATABASE {{ postgres_db }} WITH OWNER {{ postgres_user }};"
+#   # when: not "CREATE ROLE" in postgresql_user_check.stdout
 
 - name: Create SonarQube database user
   postgresql_user:
@@ -157,12 +173,6 @@
     name: sonarqube
     state: started
     enabled: yes
-
-- name: Wait for SonarQube to start
-  wait_for:
-    port: 9000
-    delay: 30
-    timeout: 300
 
 - name: Clean up downloaded files
   file:

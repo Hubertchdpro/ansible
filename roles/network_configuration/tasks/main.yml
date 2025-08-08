@@ -2,42 +2,52 @@
 ---
 
 - name: Iptables flush nat
-  ansible.builtin.iptables:
+  iptables:
     table: nat
     chain: '{{ item }}'
     flush: yes
   with_items: [ 'INPUT', 'OUTPUT', 'PREROUTING', 'POSTROUTING' ]
 
-
 - name: Enable port forwarding
-  ansible.builtin.sysctl:
+  sysctl:
     name: net.ipv4.ip_forward
     value: '1'
     state: present
     reload: yes
+  delegate_to: localhost
 
 - name: Prerouting
   iptables:
     table: nat
     chain: PREROUTING
     protocol: tcp
-    destination_port: '{{ item }}'
+    destination_port: '{{ item.port }}'
     jump: DNAT
-    to_destination: '{{ ansible_default_ipv4.address }}:{{ item }}'
+    to_destination: '{{ item.ip }}:{{ item.port }}'
     state: present
-  with_items:
+  with_items: "{{ map }}"
 
-- name: Forwarding
+- name: Allow Forwarding In
   iptables:
     chain: FORWARD
     protocol: tcp
-    destination_port: '{{ item }}'
+    # in_interface: "{{ ansible_default_ipv4.interface }}"
+    # out_interface: lxcbr0
+    destination_port: '{{ item.port }}'
     jump: ACCEPT
     state: present
-  with_items:
-    - '22'  # SSH
-    - '80'  # HTTP
-    - '443' # HTTPS
+  with_items: "{{ map }}"
+
+# - name: Allow Forwarding Out
+#   iptables:
+#     chain: FORWARD
+#     protocol: tcp
+#     in_interface: lxcbr0
+#     out_interface: "{{ ansible_default_ipv4.interface }}"
+#     destination_port: '{{ item.port }}'
+#     jump: ACCEPT
+#     state: present
+#   with_items: "{{map}}"
     
 - name: POSTROUTING
   iptables:

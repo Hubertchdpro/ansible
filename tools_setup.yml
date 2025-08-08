@@ -16,11 +16,11 @@
 #   roles: 
 #   - grafana
 
-- name: Jenkins installation
-  hosts: jenkins
-  become: yes
-  roles: 
-  - jenkins
+# - name: Jenkins installation
+#   hosts: jenkins
+#   become: yes
+#   roles: 
+#   - jenkins
 
 - name: Sonarqube installation
   hosts: sonarqube
