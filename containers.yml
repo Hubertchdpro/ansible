@@ -2,7 +2,7 @@
   hosts: localhost
   connection: local
   roles:
-# - lxc_installation
+   - lxc_installation
    - container_creation
 
 
