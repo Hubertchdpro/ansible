@@ -1,26 +1,26 @@
-﻿# - name: Nginx installation
-#   hosts: nginx
-#   become: yes
-#   roles: 
-#   - nginx
+﻿- name: Nginx installation
+  hosts: nginx
+  become: yes
+  roles: 
+  - nginx
 
-# - name: Prometheus installation
-#   hosts: prometheus
-#   become: yes
-#   roles: 
-#   - prometheus
+- name: Prometheus installation
+  hosts: prometheus
+  become: yes
+  roles: 
+  - prometheus
 
-# - name: Grafana installation
-#   hosts: grafana
-#   become: yes
-#   roles: 
-#   - grafana
+- name: Grafana installation
+  hosts: grafana
+  become: yes
+  roles: 
+  - grafana
 
-# - name: Jenkins installation
-#   hosts: jenkins
-#   become: yes
-#   roles: 
-#   - jenkins
+- name: Jenkins installation
+  hosts: jenkins
+  become: yes
+  roles: 
+  - jenkins
 
 - name: Sonarqube installation
   hosts: sonarqube

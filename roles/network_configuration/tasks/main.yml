@@ -26,28 +26,31 @@
     to_destination: '{{ item.ip }}:{{ item.port }}'
     state: present
   with_items: "{{ map }}"
+  delegate_to: localhost
 
 - name: Allow Forwarding In
   iptables:
     chain: FORWARD
     protocol: tcp
-    # in_interface: "{{ ansible_default_ipv4.interface }}"
-    # out_interface: lxcbr0
+    in_interface: "{{ ansible_default_ipv4.interface }}"
+    out_interface: lxcbr0
     destination_port: '{{ item.port }}'
     jump: ACCEPT
     state: present
   with_items: "{{ map }}"
+  delegate_to: localhost
 
-# - name: Allow Forwarding Out
-#   iptables:
-#     chain: FORWARD
-#     protocol: tcp
-#     in_interface: lxcbr0
-#     out_interface: "{{ ansible_default_ipv4.interface }}"
-#     destination_port: '{{ item.port }}'
-#     jump: ACCEPT
-#     state: present
-#   with_items: "{{map}}"
+- name: Allow Forwarding Out
+  iptables:
+    chain: FORWARD
+    protocol: tcp
+    in_interface: lxcbr0
+    out_interface: "{{ ansible_default_ipv4.interface }}"
+    destination_port: '{{ item.port }}'
+    jump: ACCEPT
+    state: present
+  with_items: "{{map}}"
+  delegate_to: localhost
     
 - name: POSTROUTING
   iptables:
@@ -56,4 +59,5 @@
     out_interface: '{{ ansible_default_ipv4.interface }}'
     jump: MASQUERADE
     state: present
+  delegate_to: localhost
 

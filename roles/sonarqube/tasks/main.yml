@@ -14,12 +14,12 @@
       - acl
     state: present
 
-- name: Ensure filesystem is mounted with ACL support (if needed)
-  shell: |
-    mount -o remount,acl /
-  args:
-    warn: false
-  ignore_errors: true
+# - name: Ensure filesystem is mounted with ACL support (if needed)
+#   shell: |
+#     mount -o remount,acl /
+#   args:
+#     warn: false
+#   ignore_errors: true
 
 - name: Configure system limits for SonarQube
   blockinfile:
