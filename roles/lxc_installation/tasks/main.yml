@@ -7,6 +7,15 @@
       - lxc
       - lxc-dev
       - python3-lxc
+      - snapd
     state: present
     update_cache: yes
+  become: yes
+
+- name: install LXD
+  command: snap install lxd
+  become: yes
+
+- name: LXD initialisation
+  shell: usermod -aG lxd "$USER" && newgrp lxd && lxd init --minimal
   become: yes

@@ -1,6 +1,6 @@
 ---
 - name: Destroy container if exists 
-  script: container_creation.sh -D
+  script: container_creation_too.sh -D
 
 - name: Run Deployment Script
-  script: container_creation.sh -c nginx grafana prometheus jenkins sonarqube
+  script: container_creation_too.sh -c nginx grafana prometheus jenkins sonarqube
