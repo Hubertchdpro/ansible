@@ -110,8 +110,9 @@ createContainer() {
     # Get container info and create inventory
     lxc list --format csv | while IFS=',' read -r name status ipv4 ipv6 type snapshots; do
         if [ -n "$ipv4" ] && [ "$status" = "RUNNING" ]; then
+            clean_ip=$(echo "$ipv4" | sed 's/ (.*)//' | tr -d ' ')
             echo "    $name:" >> "${ANSIBLE_DIR}/inventory.yml"
-            echo "      ansible_host: $ipv4" >> "${ANSIBLE_DIR}/inventory.yml"
+            echo "      ansible_host: $clean_ip" >> "${ANSIBLE_DIR}/inventory.yml"
         fi
     done
     
