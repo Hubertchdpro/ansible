@@ -1,63 +1,20 @@
 #SPDX-License-Identifier: MIT-0
 ---
-
-- name: Iptables flush nat
-  iptables:
-    table: nat
-    chain: '{{ item }}'
-    flush: yes
-  with_items: [ 'INPUT', 'OUTPUT', 'PREROUTING', 'POSTROUTING' ]
-
-- name: Enable port forwarding
-  sysctl:
-    name: net.ipv4.ip_forward
-    value: '1'
-    state: present
-    reload: yes
-  delegate_to: localhost
-
-- name: Prerouting
-  iptables:
-    table: nat
-    chain: PREROUTING
-    protocol: tcp
-    destination_port: '{{ item.port }}'
-    jump: DNAT
-    to_destination: '{{ item.ip }}:{{ item.port }}'
-    state: present
+- name: Check if port mapping already exists
+  shell: lxc config device list {{ item.node_name }} | grep "{{ item.node_name }}{{ item.port }}" || true
+  register: existing_device
   with_items: "{{ map }}"
-  delegate_to: localhost
 
-- name: Allow Forwarding In
-  iptables:
-    chain: FORWARD
-    protocol: tcp
-    in_interface: "{{ ansible_default_ipv4.interface }}"
-    out_interface: lxcbr0
-    destination_port: '{{ item.port }}'
-    jump: ACCEPT
-    state: present
+- name: Remove existing port mapping if it exists
+  command: lxc config device remove {{ item.node_name }} {{ item.node_name }}{{ item.port }}
+  delegate_to: localhost
+  when: existing_device.stdout != ""
   with_items: "{{ map }}"
-  delegate_to: localhost
 
-- name: Allow Forwarding Out
-  iptables:
-    chain: FORWARD
-    protocol: tcp
-    in_interface: lxcbr0
-    out_interface: "{{ ansible_default_ipv4.interface }}"
-    destination_port: '{{ item.port }}'
-    jump: ACCEPT
-    state: present
-  with_items: "{{map}}"
+- name: Add port mapping to container
+  command: >
+    lxc config device add {{ item.node_name }} {{ item.node_name }}{{ item.port }} proxy 
+    listen={{ protocol }}:0.0.0.0:{{ item.port }}
+    connect={{ protocol }}:127.0.0.1:{{ item.port }}
   delegate_to: localhost
-    
-- name: POSTROUTING
-  iptables:
-    table: nat
-    chain: POSTROUTING
-    out_interface: '{{ ansible_default_ipv4.interface }}'
-    jump: MASQUERADE
-    state: present
-  delegate_to: localhost
-
+  with_items: "{{ map }}"

@@ -2,14 +2,19 @@
 ---
 
 map:
-  - ip: "{{ hostvars['nginx']['ansible_host'] }}"
+  - node_name: "nginx"
     port: 80
-  - ip: "{{ hostvars['prometheus']['ansible_host'] }}"
+    protocol: "tcp"
+  - node_name: "prometheus"
     port: 9090
-  - ip: "{{ hostvars['grafana']['ansible_host'] }}"
+    protocol: "tcp"
+  - node_name: "grafana"
     port: 3000
-  - ip: "{{ hostvars['jenkins']['ansible_host'] }}"
+    protocol: "tcp"
+  - node_name: "jenkins"
     port: 8080
-  - ip: "{{ hostvars['sonarqube']['ansible_host'] }}"
+    protocol: "tcp"
+  - node_name: "sonarqube"
     port: 9000
+    protocol: "tcp"
 
