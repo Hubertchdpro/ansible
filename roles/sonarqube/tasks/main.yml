@@ -1,11 +1,35 @@
 #SPDX-License-Identifier: MIT-0
 ---
 - name: Install Docker
-  shell: >
-    apt update &&
-    apt install -y docker.io &&
-    systemctl enable docker &&
-    systemctl start docker
-  
-- name: Run SonarQube in Docker
-  command: docker run -d -p 9000:9000 --name sonarqube sonarqube
+  apt:
+    name: docker.io
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Enable Docker service
+  systemd:
+    name: docker
+    enabled: yes
+    state: started
+
+- name: Add current user to docker group
+  user:
+    name: "{{ ansible_user | default(ansible_env.USER) }}"
+    groups: docker
+    append: yes
+
+- name: Run SonarQube container
+  docker_container:
+    name: sonarqube
+    image: sonarqube:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "9000:9000"
+    env:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
