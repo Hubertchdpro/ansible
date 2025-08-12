@@ -1,10 +1,15 @@
 #SPDX-License-Identifier: MIT-0
 ---
-# vars file for sonarqube
-sonarqube_version: "25.8.0.112029"
-sonarqube_user: sonarqube
-sonarqube_group: sonarqube
-sonarqube_home: /opt/sonarqube
-postgres_password: "sonar123"
-# postgres_db: "sonarqube"
-# postgres_user: "sonarqube"
+
+# Docker and PostgreSQL configuration
+postgresql_version: "16"
+postgresql_container_name: "sonarqube-db"
+postgresql_port: 5432
+db_name: "sonarqube"
+db_user: "sonar"
+db_password: "YourStrongDbPassword" # <-- CHANGE THIS!
+
+# SonarQube configuration
+sonarqube_version: "lts"
+sonarqube_container_name: "sonarqube"
+sonarqube_port: 9000

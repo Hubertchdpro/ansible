@@ -1,35 +1,83 @@
 #SPDX-License-Identifier: MIT-0
 ---
-- name: Install Docker
-  apt:
-    name: docker.io
+- name: Ensure 'docker.io' and required packages are installed
+  ansible.builtin.apt:
+    name:
+      - docker.io
+      - python3-pip
+      - docker-compose
+      - python3-docker
     state: present
     update_cache: yes
-    cache_valid_time: 3600
 
-- name: Enable Docker service
-  systemd:
+- name: Ensure the 'docker' Python module is installed
+  ansible.builtin.pip:
     name: docker
-    enabled: yes
-    state: started
+    state: present
 
-- name: Add current user to docker group
-  user:
+- name: Ensure Docker service is started and enabled
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Ensure the 'docker' group exists
+  ansible.builtin.group:
+    name: docker
+    state: present
+
+- name: Add the default user to the 'docker' group
+  ansible.builtin.user:
     name: "{{ ansible_user | default(ansible_env.USER) }}"
     groups: docker
     append: yes
 
-- name: Run SonarQube container
-  docker_container:
-    name: sonarqube
-    image: sonarqube:latest
+- name: Pause for 10 seconds to allow Docker daemon to fully start
+  ansible.builtin.pause:
+    seconds: 10
+
+- name: Create a persistent volume for PostgreSQL data
+  community.docker.docker_volume:
+    name: "{{ postgresql_container_name }}-data"
+    state: present
+
+- name: Run PostgreSQL container
+  community.docker.docker_container:
+    name: "{{ postgresql_container_name }}"
+    image: "postgres:{{ postgresql_version }}"
     state: started
-    restart_policy: unless-stopped
+    restart_policy: always
     ports:
-      - "9000:9000"
-    env:
-      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+      - "{{ postgresql_port }}:5432"
     volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_logs:/opt/sonarqube/logs
-      - sonarqube_extensions:/opt/sonarqube/extensions
+      - "{{ postgresql_container_name }}-data:/var/lib/postgresql/data"
+    env:
+      POSTGRES_USER: "{{ db_user }}"
+      POSTGRES_PASSWORD: "{{ db_password }}"
+      POSTGRES_DB: "{{ db_name }}"
+
+- name: Create a persistent volume for SonarQube data
+  community.docker.docker_volume:
+    name: "{{ sonarqube_container_name }}-data"
+    state: present
+
+- name: Run SonarQube container
+  community.docker.docker_container:
+    name: "{{ sonarqube_container_name }}"
+    image: "sonarqube:{{ sonarqube_version }}"
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ sonarqube_port }}:9000"
+    volumes:
+      - "{{ sonarqube_container_name }}-data:/opt/sonarqube/data"
+    env:
+      SONAR_JDBC_URL: "jdbc:postgresql://{{ postgresql_container_name }}:5432/{{ db_name }}"
+      SONAR_JDBC_USERNAME: "{{ db_user }}"
+      SONAR_JDBC_PASSWORD: "{{ db_password }}"
+    
+- name: Wait for SonarQube to be ready
+  ansible.builtin.wait_for:
+    port: "{{ sonarqube_port }}"
+    timeout: 300
+    host: "{{ ansible_host }}"
