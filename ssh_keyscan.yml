@@ -1,5 +1,5 @@
 ﻿- name: SSH keyscan all inventory hosts
-  hosts: containers
+  hosts: localhost
   connection: local
   gather_facts: no
   vars:
