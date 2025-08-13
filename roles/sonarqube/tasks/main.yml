@@ -10,10 +10,9 @@
     state: present
     update_cache: yes
 
-- name: Ensure the 'docker' Python module is installed
-  ansible.builtin.pip:
-    name: docker
-    state: present
+# - name: Ensure the 'docker' Python module is installed
+#   ansible.builtin.pip:
+#     name: docker
 
 - name: Ensure Docker service is started and enabled
   ansible.builtin.service:
@@ -45,6 +44,7 @@
   community.docker.docker_container:
     name: "{{ postgresql_container_name }}"
     image: "postgres:{{ postgresql_version }}"
+    privileged: true
     state: started
     restart_policy: always
     ports:
@@ -65,6 +65,7 @@
   community.docker.docker_container:
     name: "{{ sonarqube_container_name }}"
     image: "sonarqube:{{ sonarqube_version }}"
+    privileged: true
     state: started
     restart_policy: always
     ports:

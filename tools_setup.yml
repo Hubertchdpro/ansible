@@ -22,8 +22,8 @@
   roles: 
   - jenkins
 
-- name: Sonarqube installation
-  hosts: sonarqube
-  become: yes
-  roles: 
-  - sonarqube
+# - name: Sonarqube installation
+#   hosts: sonarqube
+#   become: yes
+#   roles: 
+#   - sonarqube

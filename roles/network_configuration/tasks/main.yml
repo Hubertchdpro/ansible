@@ -5,16 +5,20 @@
   register: existing_device
   with_items: "{{ map }}"
 
+# - name: Result
+#   debug:
+#     var: existing_device
+
 - name: Remove existing port mapping if it exists
-  command: lxc config device remove {{ item.node_name }} {{ item.node_name }}{{ item.port }}
+  ansible.builtin.command: lxc config device remove {{ item.item.node_name }} {{ item.item.node_name }}{{ item.item.port }}
   delegate_to: localhost
-  when: existing_device.stdout != ""
-  with_items: "{{ map }}"
+  loop: "{{ existing_device.results }}"
+  when: item.stdout != ""
 
 - name: Add port mapping to container
   command: >
     lxc config device add {{ item.node_name }} {{ item.node_name }}{{ item.port }} proxy 
-    listen={{ protocol }}:0.0.0.0:{{ item.port }}
-    connect={{ protocol }}:127.0.0.1:{{ item.port }}
+    listen={{ item.protocol }}:0.0.0.0:{{ item.port }}
+    connect={{ item.protocol }}:127.0.0.1:{{ item.port }}
   delegate_to: localhost
   with_items: "{{ map }}"
